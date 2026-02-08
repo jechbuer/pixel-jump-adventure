@@ -29,6 +29,12 @@
 - 📱 **Responsive UI** mit Gesundheitsanzeige und Score
 - 🎮 **Menü-System** (Start, Pause, Game Over, Victory)
 
+### 🎵 Sound & Musik (Hans Zimmer Style)
+- 🎼 **Prozedurale Sound-Effekte** (Sprung, Schuss, Collect, Explosion)
+- 🎹 **Epische Hintergrundmusik** inspiriert von Hans Zimmer
+- 🔊 **Dynamische Musik** (Menü, Spiel, Victory, Game Over)
+- 🎚️ **Einstellbare Lautstärke** für SFX und Musik
+
 ## 🚀 Schnellstart
 
 ### Voraussetzungen
@@ -85,7 +91,7 @@ pixel_jump_adventure/
 │   ├── images/
 │   └── sounds/
 ├── docs/                  # Dokumentation
-└── src/                   # Quellcode (~2100 Zeilen)
+└── src/                   # Quellcode (~2500 Zeilen)
     ├── constants.py       # Spiel-Konstanten & Farben
     ├── game_engine.py     # Haupt-Spielengine
     ├── player.py          # Spieler-Klasse
@@ -93,6 +99,7 @@ pixel_jump_adventure/
     ├── platform.py        # Plattformen
     ├── collectible.py     # Sammelbare Items
     ├── projectile.py      # Projektil-System
+    ├── sound_manager.py   # 🎵 Sound & Musik (Hans Zimmer Style)
     └── utils.py           # Hilfsfunktionen & Kamera
 ```
 
