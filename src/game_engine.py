@@ -21,6 +21,7 @@ from platform import Platform, PlatformManager
 from collectible import Collectible, CollectibleManager
 from projectile import Projectile, ProjectileManager
 from utils import Camera, ParticleSystem, draw_pixel_text, draw_button
+from sound_manager import SoundManager
 
 
 class GameEngine:
@@ -49,6 +50,9 @@ class GameEngine:
         # Partikel-System
         self.particles = ParticleSystem()
         
+        # Sound Manager (Hans Zimmer Style)
+        self.sound = SoundManager()
+        
         # Spiel-Objekte
         self.player: Optional[Player] = None
         self.platforms = PlatformManager()
@@ -76,6 +80,9 @@ class GameEngine:
         
         # Level initialisieren
         self._init_level()
+        
+        # Menü-Musik starten
+        self.sound.play_music('menu')
     
     def _init_level(self) -> None:
         """Initialisiert das Level mit Plattformen, Gegnern und Items"""
@@ -127,6 +134,9 @@ class GameEngine:
         # Kamera zurücksetzen
         self.camera.x = 0
         self.camera.y = 0
+        
+        # Spiel-Musik starten
+        self.sound.play_music('game')
     
     def handle_events(self) -> None:
         """Verarbeitet alle Pygame-Events"""
@@ -192,8 +202,10 @@ class GameEngine:
         """Wechselt zwischen Pause und Spiel"""
         if self.state == STATE_PLAYING:
             self.state = STATE_PAUSED
+            self.sound.pause_music()
         elif self.state == STATE_PAUSED:
             self.state = STATE_PLAYING
+            self.sound.unpause_music()
     
     def _check_menu_buttons(self, pos: tuple) -> None:
         """Prüft Menü-Button-Klicks"""
@@ -201,6 +213,7 @@ class GameEngine:
         center_y = SCREEN_HEIGHT // 2 + 20
         
         if self._is_button_clicked(pos, center_x, center_y, 200, 50):
+            self.sound.play_sound('select')
             self.reset_game()
     
     def _check_pause_buttons(self, pos: tuple) -> None:
@@ -209,10 +222,13 @@ class GameEngine:
         
         # Weiter-Button
         if self._is_button_clicked(pos, center_x, 360, 200, 50):
+            self.sound.play_sound('select')
             self.state = STATE_PLAYING
+            self.sound.unpause_music()
         
         # Neustart-Button
         if self._is_button_clicked(pos, center_x, 420, 200, 50):
+            self.sound.play_sound('select')
             self.reset_game()
     
     def _check_gameover_buttons(self, pos: tuple) -> None:
@@ -221,6 +237,7 @@ class GameEngine:
         center_y = SCREEN_HEIGHT // 2 + 50
         
         if self._is_button_clicked(pos, center_x, center_y, 200, 50):
+            self.sound.play_sound('select')
             self.reset_game()
     
     def _check_victory_buttons(self, pos: tuple) -> None:
@@ -229,6 +246,7 @@ class GameEngine:
         center_y = SCREEN_HEIGHT // 2 + 50
         
         if self._is_button_clicked(pos, center_x, center_y, 200, 50):
+            self.sound.play_sound('select')
             self.reset_game()
     
     def _is_button_clicked(self, mouse_pos: tuple, btn_x: int, btn_y: int, 
@@ -243,10 +261,16 @@ class GameEngine:
             return
         
         # === SPIELER AKTUALISIEREN ===
+        was_grounded = self.player.is_grounded
+        
         projectile_data = self.player.update(
             self.input_left, self.input_right, 
             self.input_jump, self.input_shoot_pressed
         )
+        
+        # Sprung-Sound abspielen
+        if self.input_jump and was_grounded and not self.player.is_grounded:
+            self.sound.play_sound('jump')
         
         # Projektil hinzufügen wenn geschossen
         if projectile_data:
@@ -256,6 +280,7 @@ class GameEngine:
                 projectile_data['width'], projectile_data['height'],
                 projectile_data['is_player']
             )
+            self.sound.play_sound('shoot')
         
         # === KOLLISIONEN PRÜFEN ===
         self._check_collisions()
@@ -333,6 +358,7 @@ class GameEngine:
             if enemy and enemy.take_damage():
                 self.player.vy = -7  # Kleiner Bounce
                 self.score += SCORE_ENEMY_JUMP
+                self.sound.play_sound('explosion')
                 self.particles.create_explosion(
                     enemy.x + enemy.width / 2, 
                     enemy.y + enemy.height / 2,
@@ -341,8 +367,7 @@ class GameEngine:
         elif collision_type == 'hit':
             # Spieler wird getroffen
             if self.player.take_damage():
-                # Schaden genommen
-                pass
+                self.sound.play_sound('hurt')
         
         # === SPIELER vs ITEMS ===
         collected, value, is_health = self.collectibles.check_collision_with_player(player_rect)
@@ -350,8 +375,13 @@ class GameEngine:
         if collected:
             if is_health:
                 self.player.heal()
+                self.sound.play_sound('coin')  # Oder ein spezieller Heal-Sound
             else:
                 self.score += value
+                if value >= 50:
+                    self.sound.play_sound('gem')
+                else:
+                    self.sound.play_sound('coin')
             
             self.particles.create_sparkles(
                 self.player.center_x, self.player.center_y,
@@ -365,6 +395,7 @@ class GameEngine:
                 enemy = self.enemies.get_enemy(enemy_idx)
                 if enemy and enemy.take_damage():
                     self.score += SCORE_ENEMY_SHOT
+                    self.sound.play_sound('explosion')
                     self.particles.create_explosion(
                         enemy.x + enemy.width / 2,
                         enemy.y + enemy.height / 2,
@@ -382,11 +413,15 @@ class GameEngine:
         # Game Over
         if self.player.health <= 0:
             self.state = STATE_GAMEOVER
+            self.sound.stop_music()
+            self.sound.play_sound('gameover')
             return
         
         # Victory (alle Items gesammelt)
         if self.collectibles.count_remaining() == 0 and self.collectibles.count_collected() > 0:
             self.state = STATE_VICTORY
+            self.sound.stop_music()
+            self.sound.play_sound('victory')
     
     def draw(self) -> None:
         """Zeichnet das komplette Spiel"""
