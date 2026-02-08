@@ -1,8 +1,8 @@
 # Pixel Jump Adventure - Abhängigkeiten
 # Installieren mit: pip install -r requirements.txt
 
-# Hauptabhängigkeit
+# Hauptabhängigkeiten
 pygame>=2.5.0
+numpy>=1.24.0
 
-# Optional: Für bessere Performance
-# numpy>=1.24.0
+# Für Sound-Generierung (Hans Zimmer Style)
